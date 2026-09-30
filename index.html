@@ -1,98 +1,104 @@
 <script>
-  // Synchronisation bloquante au tout premier démarrage
-  (async function() {
-    const API_URL = "https://script.google.com/macros/s/AKfycbxdU_voHWAMkO-o2K4mb9ggN38DXQlJcUs3x4DP2Yw-Ug4ePQ0EpVACnzfKkggG5Z7r/exec";
+  const API_URL = "https://script.google.com/macros/s/AKfycbxdU_voHWAMkO-o2K4mb9ggN38DXQlJcUs3x4DP2Yw-Ug4ePQ0EpVACnzfKkggG5Z7r/exec";
 
-    function mapSheetRowToJSON(entity, row) {
-      if (!row) return {};
-      if (entity === 'clients') {
-        return {
-          id: row.ID_Client || row.id || '',
-          name: row.Nom_Affichage || row.name || '',
-          first: row.Prenom || row.first || '',
-          last: row.Nom || row.last || '',
-          company: row.Entreprise || row.company || '',
-          status: row.Statut_Client || row.status || 'Actif',
-          phone: String(row.Telephone || row.phone || ''),
-          email: row.Email || row.email || '',
-          street: row.Adresse_Ligne_1 || row.street || '',
-          postal: String(row.Code_Postal || row.postal || ''),
-          city: row.Ville || row.city || '',
-          source: row.Canal_Obtention || row.source || '',
-          notes: row.Notes || row.notes || '',
-          archived: row.Archive === 'Oui' || row.archived === true
-        };
-      }
-      if (entity === 'chantiers') {
-        return {
-          id: row.ID_Chantier || row.id || '',
-          client: row.ID_Client || row.client || '',
-          name: row.Nom_Chantier || row.name || '',
-          description: row.Description || row.description || '',
-          price: Number(row.Tarif_HT || row.price || 0),
-          duration: String(row.Duree_Estimee || row.duration || ''),
-          status: row.Statut_Chantier || row.status || 'À planifier',
-          notes: row.Notes || row.notes || '',
-          archived: row.Archive === 'Oui' || row.archived === true
-        };
-      }
-      if (entity === 'interventions') {
-        return {
-          id: row.ID_Intervention || row.id || '',
-          client: row.ID_Client || row.client || '',
-          chantier: row.ID_Chantier || row.chantier || '',
-          date: row.Date_Intervention || row.date || '',
-          hour: row.Heure || row.hour || '',
-          duration: String(row.Duree_Reelle || row.duration || ''),
-          amount: Number(row.Montant || row.amount || 0),
-          status: row.Statut_Intervention || row.status || 'Planifiée',
-          invoiceId: row.ID_Facture || row.invoiceId || '',
-          notes: row.Notes || row.notes || '',
-          archived: row.Archive === 'Oui' || row.archived === true
-        };
-      }
-      if (entity === 'devis') {
-        return {
-          id: row.ID_Devis || row.id || '',
-          client: row.ID_Client || row.client || '',
-          chantier: row.ID_Chantier || row.chantier || '',
-          chantiers: row.Chantiers ? String(row.Chantiers).split(',') : (row.chantiers || []),
-          created: row.Date_Creation || row.created || '',
-          amount: Number(row.Montant_Total || row.amount || 0),
-          status: row.Statut_Devis || row.status || 'En cours',
-          visitDate: row.Date_Visite || row.visitDate || '',
-          visitHour: row.Heure_Visite || row.visitHour || '',
-          notes: row.Notes || row.notes || '',
-          archived: row.Archive === 'Oui' || row.archived === true
-        };
-      }
-      if (entity === 'factures') {
-        return {
-          id: row.ID_Facture || row.id || '',
-          client: row.ID_Client || row.client || '',
-          date: row.Date_Facture || row.date || '',
-          interventions: row.Interventions ? String(row.Interventions).split(',') : (row.interventions || []),
-          status: row.Statut_Facture || row.status || 'Émise',
-          payment: row.Mode_Paiement || row.payment || '',
-          paidDate: row.Date_Paiement || row.paidDate || '',
-          paidAmount: Number(row.Montant_Paye || row.paidAmount || 0),
-          notes: row.Notes || row.notes || '',
-          archived: row.Archive === 'Oui' || row.archived === true
-        };
-      }
-      if (entity === 'relances') {
-        return {
-          id: row.ID_Relance || row.id || '',
-          client: row.ID_Client || row.client || '',
-          date: row.Date_Relance || row.date || '',
-          channel: row.Canal || row.channel || '',
-          subject: row.Objet || row.subject || '',
-          notes: row.Notes || row.notes || ''
-        };
-      }
-      return row;
+  function mapSheetRowToJSON(entity, row) {
+    if (!row) return {};
+    
+    if (entity === 'clients') {
+      return {
+        id: row.ID_Client || row.id || '',
+        name: row.Nom_Affichage || row.name || '',
+        first: row.Prenom || row.first || '',
+        last: row.Nom || row.last || '',
+        company: row.Entreprise || row.company || '',
+        status: row.Statut_Client || row.status || 'Actif',
+        phone: String(row.Telephone || row.phone || ''),
+        email: row.Email || row.email || '',
+        street: row.Adresse_Ligne_1 || row.street || '',
+        postal: String(row.Code_Postal || row.postal || ''),
+        city: row.Ville || row.city || '',
+        source: row.Canal_Obtention || row.source || '',
+        notes: row.Notes || row.notes || '',
+        archived: row.Archive === 'Oui' || row.archived === true
+      };
+    }
+    
+    if (entity === 'chantiers') {
+      return {
+        id: row.ID_Chantier || row.id || '',
+        client: row.ID_Client || row.client || '',
+        name: row.Nom_Chantier || row.name || '',
+        description: row.Description || row.description || '',
+        price: Number(row.Tarif_HT || row.price || 0),
+        duration: String(row.Duree_Estimee || row.duration || ''),
+        status: row.Statut_Chantier || row.status || 'À planifier',
+        notes: row.Notes || row.notes || '',
+        archived: row.Archive === 'Oui' || row.archived === true
+      };
     }
 
+    if (entity === 'interventions') {
+      return {
+        id: row.ID_Intervention || row.id || '',
+        client: row.ID_Client || row.client || '',
+        chantier: row.ID_Chantier || row.chantier || '',
+        date: row.Date_Intervention || row.date || '',
+        hour: row.Heure || row.hour || '',
+        duration: String(row.Duree_Reelle || row.duration || ''),
+        amount: Number(row.Montant || row.amount || 0),
+        status: row.Statut_Intervention || row.status || 'Planifiée',
+        invoiceId: row.ID_Facture || row.invoiceId || '',
+        notes: row.Notes || row.notes || '',
+        archived: row.Archive === 'Oui' || row.archived === true
+      };
+    }
+
+    if (entity === 'devis') {
+      return {
+        id: row.ID_Devis || row.id || '',
+        client: row.ID_Client || row.client || '',
+        chantier: row.ID_Chantier || row.chantier || '',
+        chantiers: row.Chantiers ? String(row.Chantiers).split(',') : (row.chantiers || []),
+        created: row.Date_Creation || row.created || '',
+        amount: Number(row.Montant_Total || row.amount || 0),
+        status: row.Statut_Devis || row.status || 'En cours',
+        visitDate: row.Date_Visite || row.visitDate || '',
+        visitHour: row.Heure_Visite || row.visitHour || '',
+        notes: row.Notes || row.notes || '',
+        archived: row.Archive === 'Oui' || row.archived === true
+      };
+    }
+
+    if (entity === 'factures') {
+      return {
+        id: row.ID_Facture || row.id || '',
+        client: row.ID_Client || row.client || '',
+        date: row.Date_Facture || row.date || '',
+        interventions: row.Interventions ? String(row.Interventions).split(',') : (row.interventions || []),
+        status: row.Statut_Facture || row.status || 'Émise',
+        payment: row.Mode_Paiement || row.payment || '',
+        paidDate: row.Date_Paiement || row.paidDate || '',
+        paidAmount: Number(row.Montant_Paye || row.paidAmount || 0),
+        notes: row.Notes || row.notes || '',
+        archived: row.Archive === 'Oui' || row.archived === true
+      };
+    }
+
+    if (entity === 'relances') {
+      return {
+        id: row.ID_Relance || row.id || '',
+        client: row.ID_Client || row.client || '',
+        date: row.Date_Relance || row.date || '',
+        channel: row.Canal || row.channel || '',
+        subject: row.Objet || row.subject || '',
+        notes: row.Notes || row.notes || ''
+      };
+    }
+
+    return row;
+  }
+
+  async function syncAndImport() {
     try {
       const response = await fetch(API_URL);
       const rawData = await response.json();
@@ -107,21 +113,30 @@
         settings: (rawData.settings && rawData.settings[0]) ? rawData.settings[0] : {}
       };
 
+      // 1. Mise à jour de sécurité dans le localStorage
       const jsonStr = JSON.stringify(formattedData);
-      const currentStored = localStorage.getItem("alainb_pro_data");
-
-      // On enregistre les données Google Sheets
       localStorage.setItem("alainb_pro_data", jsonStr);
       localStorage.setItem("AlainBProData", jsonStr);
 
-      // Si le localStorage était vide ou différent, on recharge une fois pour forcer l'application à démarrer avec les nouvelles données
-      if (!currentStored || currentStored !== jsonStr) {
-        window.location.reload();
+      // 2. Simulation d'importation native via la fonction interne identifiée
+      if (typeof importJsonFile === 'function') {
+        const file = new File([jsonStr], "backup.json", { type: "application/json" });
+        importJsonFile(file);
+      } else if (typeof importFile === 'function') {
+        const file = new File([jsonStr], "backup.json", { type: "application/json" });
+        importFile(file);
       }
-    } catch (e) {
-      console.error("Erreur sync :", e);
+
+      // 3. Rafraîchissement du rendu de l'interface
+      if (typeof render === 'function') {
+        render();
+      }
+    } catch (error) {
+      console.error("Erreur d'importation Google Sheets :", error);
     }
-  })();
+  }
+
+  window.addEventListener("DOMContentLoaded", syncAndImport);
 </script>
 <!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AlainB Pro — V1.6.40</title><style>:root{--nav:#102038;--teal:#2cbfad;--bg:#f3f6fa;--ink:#1d2e44;--mut:#6b7e91;--line:#dfe7ef;--gold:#d99a19;--red:#d95c5c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px Arial,sans-serif}.side{position:fixed;inset:0 auto 0 0;width:245px;background:var(--nav);color:#e7f0fa}.brand{height:77px;padding:18px;display:flex;gap:11px;align-items:center;border-bottom:1px solid #29425f}.mark{width:34px;height:34px;border-radius:9px;background:var(--teal);display:grid;place-items:center;color:#09263a;font-size:19px;font-weight:bold}.brand b{font-size:19px}.brand small{display:block;font-size:10px;letter-spacing:1px;color:#9eb5ca;margin-top:3px}.nav{padding:15px 10px}.nav button{width:100%;border:0;background:transparent;color:#d6e3ef;padding:12px 14px;text-align:left;border-radius:8px;margin:2px 0;font-weight:bold;font-size:14px;cursor:pointer}.nav button:hover,.nav button.active{background:var(--teal);color:#09283a}.cap{border-top:1px solid #29425f;margin:16px 4px 8px;padding:16px 10px 0;color:#8399b0;font-size:10px;font-weight:bold;letter-spacing:1px}.foot{position:absolute;bottom:0;left:0;right:0;border-top:1px solid #29425f;padding:15px;color:#b4c5d5;font-size:12px}.foot span{display:block;color:#40d4b4;font-size:11px;margin-top:6px}.main{margin-left:245px;min-height:100vh}.top{height:60px;display:flex;align-items:center;background:#fff;border-bottom:1px solid var(--line);padding:0 28px;font-weight:bold}.soft{color:#62788f}.right{margin-left:auto;display:flex;gap:8px}.pill{padding:7px 10px;border:1px solid #d3dfeb;background:#f9fbfd;border-radius:8px;color:#526a83;font-size:12px}.page{padding:28px;max-width:1600px;margin:auto}.hero{background:linear-gradient(110deg,#102038,#0b1c31);border-radius:14px;padding:25px 28px;color:#fff;margin-bottom:23px}.eyebrow{font-size:11px;font-weight:bold;letter-spacing:1px;color:var(--teal)}.hero h1{margin:6px 0;font-size:25px}.hero p{margin:0;color:#d7e4ef;line-height:1.5}.metrics{display:grid;grid-template-columns:repeat(4,minmax(155px,1fr));gap:16px;margin-bottom:24px}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:13px;padding:18px;box-shadow:0 6px 22px #1635530c}.label{font-weight:bold;color:#687b90}.value{font-size:27px;font-weight:bold;margin:7px 0 3px;color:#17324c}.teal{color:#129984}.small{font-size:12px;color:var(--mut)}.panel h2{font-size:16px;margin:0}.panelhead{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding-bottom:11px;margin-bottom:10px}.link{border:0;background:none;color:#129984;font-weight:bold;cursor:pointer}.twocol{display:grid;grid-template-columns:1.05fr .95fr;gap:20px}.item{border:1px solid #e2eaf1;border-radius:9px;padding:11px 13px;margin:8px 0;background:#fff}.item.late{border-left:4px solid var(--red);background:#fff8f8}.item.soon{border-left:4px solid var(--gold);background:#fffdf4}.item.ok{border-left:4px solid var(--teal);background:#f8fffd}.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:17px}.toolbar h1{font-size:24px;margin:0 auto 0 0}.btn{border:0;border-radius:8px;background:var(--teal);color:#09283a;font-weight:bold;padding:10px 13px;cursor:pointer}.btn.alt{background:#e8eff6;color:#36506d}.btn.red{background:#fdeaea;color:#b63c3c}.btn.warn{background:#fff0dc;color:#995200}.btn:disabled{opacity:.55;cursor:not-allowed}.search{border:1px solid #ccd9e5;background:#fff;border-radius:8px;padding:10px 11px;min-width:230px}.notice{background:#fff7dc;border:1px solid #f0dd9c;border-radius:9px;padding:12px 14px;margin-bottom:16px;line-height:1.45}.oknotice{background:#e9faf5;border:1px solid #a6e1ce;border-radius:9px;padding:12px 14px;margin-bottom:16px;line-height:1.45}.tablebox{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff}table{border-collapse:collapse;width:100%;min-width:900px}th,td{padding:11px 12px;border-bottom:1px solid #e9eff4;text-align:left;vertical-align:top}th{font-size:12px;color:#5d7188;background:#f7f9fb;white-space:nowrap}.tag{display:inline-block;padding:4px 8px;border-radius:99px;font-size:11px;font-weight:bold;background:#eaf1ff;color:#3864b2}.tag.green{background:#e3f7ee;color:#167b55}.tag.gold{background:#fff0c6;color:#916200}.tag.red{background:#fdeaea;color:#b43a3a}.upload{border:2px dashed #8ebcab;border-radius:11px;background:#fafffd;padding:28px;text-align:center}.filelabel{display:inline-block;border:0;border-radius:8px;background:#e8eff6;color:#36506d;font-weight:bold;padding:10px 14px;cursor:pointer}.fileinput{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}.filename{font-weight:bold;margin:13px 0 8px;min-height:18px}.importstatus{margin-top:12px;font-weight:bold}.modalbg{position:fixed;inset:0;background:#07172799;z-index:50;display:grid;place-items:center;padding:18px}.modal{position:relative;max-width:850px;width:100%;background:#fff;border-radius:13px;padding:22px;box-shadow:0 25px 65px #0005;max-height:90vh;overflow:auto}.modal h2{margin:0 35px 12px 0;font-size:20px}.xclose{position:absolute;right:14px;top:11px;border:0;background:transparent;color:#64778c;font-size:27px;cursor:pointer}.actions{margin-top:17px;display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.detailgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}.field{background:#f7f9fb;border:1px solid #e4ebf2;border-radius:8px;padding:9px}.field b{display:block;font-size:11px;color:#60758b;margin-bottom:3px}.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.formgrid label{font-size:12px;font-weight:bold;color:#50657b}.formgrid input,.formgrid select,.formgrid textarea{width:100%;padding:9px;border:1px solid #cdd9e4;border-radius:7px;margin-top:5px;font:14px inherit}.formgrid textarea{min-height:75px}.full{grid-column:1/-1}.backupgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.backupcard{border:1px solid #dce6ef;border-radius:11px;padding:17px;background:#fbfdff}.backupcard h3{margin:0 0 8px;font-size:16px}.backupcard p{line-height:1.45;color:#586d83}.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}.filters button{border:1px solid #cfdce7;background:#fff;color:#486078;border-radius:7px;padding:8px 10px;font-weight:bold;cursor:pointer}.filters button.active{background:#102038;color:#fff}.mobile{display:none}.devis-form{max-width:760px;margin:auto}.devis-form .formgrid{gap:14px}.devis-form label{font-size:11px;font-weight:bold;letter-spacing:.35px;color:#5d7188;text-transform:uppercase}.devis-form .formgrid input,.devis-form .formgrid select{background:#f9fbfe;border-color:#dce5ee;padding:11px;border-radius:9px}.devis-form .quote-amount input{border:2px solid #8bddd2;background:#f6fffd;color:#126f68;font-weight:bold}.client-address-card{grid-column:1/-1;background:#eef3ff;border-radius:12px;padding:14px 16px;color:#26395f;line-height:1.55}.client-address-card b{display:block;color:#566bb2;font-size:11px;letter-spacing:.55px;text-transform:uppercase;margin-bottom:5px}.chantier-description-card{grid-column:1/-1;border:2px solid #9a9687;background:#fffdf0;border-radius:12px;padding:14px 16px;color:#49483f;line-height:1.55}.chantier-description-card b{display:block;color:#a56525;font-size:11px;letter-spacing:.55px;text-transform:uppercase;margin-bottom:8px}.chantier-description-card .quote-description{background:#fff;border-radius:8px;padding:10px 12px;font-style:italic;font-weight:bold;color:#68717a;min-height:20px}.devis-form .actions{border-top:1px solid #e6edf3;padding-top:16px;margin-top:20px}.devis-form .actions .btn{padding:11px 17px}.devis-form .actions .btn:not(.alt){border-radius:12px}.devis-form .quote-details{grid-column:1/-1;margin-top:2px;color:#60758b;font-size:12px}
 .quote-services{grid-column:1/-1;border:1px solid #cfe1df;background:#f8fffd;border-radius:12px;padding:14px 16px}.quote-services>b{display:block;color:#126f68;font-size:11px;letter-spacing:.55px;text-transform:uppercase;margin-bottom:9px}.quote-service-list{display:grid;gap:8px}.quote-service{display:flex;align-items:flex-start;gap:9px;border:1px solid #dceae8;background:#fff;border-radius:8px;padding:9px 10px;cursor:pointer}.quote-service input{width:auto!important;margin-top:3px}.quote-service span{flex:1}.quote-service em{font-style:normal;font-weight:bold;color:#126f68;white-space:nowrap}.quote-service small{display:block;color:#687b90;margin-top:3px;line-height:1.35}.quote-summary{grid-column:1/-1;border-top:1px solid #dceae8;padding-top:11px;color:#17324c;font-weight:bold}.quote-summary .small{font-weight:normal;color:#687b90;margin-top:4px}.client-picker{position:relative}.client-picker input{width:100%;box-sizing:border-box}.client-results{display:none;position:absolute;z-index:80;left:0;right:0;top:100%;max-height:210px;overflow:auto;background:#fff;border:1px solid #cdd9e4;border-radius:8px;box-shadow:0 8px 20px #17324c22;margin-top:3px}.client-results.open{display:block}.client-result{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid #edf1f5;background:#fff;padding:9px 10px;cursor:pointer;font:inherit;color:#17324c}.client-result:hover{background:#e9faf5}.client-result small{display:block;color:#687b90;margin-top:2px}.client-empty{padding:10px;color:#687b90;font-size:12px}
