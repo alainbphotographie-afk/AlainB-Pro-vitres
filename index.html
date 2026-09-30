@@ -140,32 +140,45 @@
 
   window.addEventListener("DOMContentLoaded", syncAndImport);
 
-  // 3. Fonction globale d'envoi vers Google Sheets
+  // 3. Fonction définitive de synchronisation et de capture directe des formulaires
   function triggerGoogleSheetsSync() {
     setTimeout(() => {
       try {
         const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
         const currentData = JSON.parse(rawStorage || '{}');
 
-        console.log("Envoi de la synchronisation vers Google Sheets...", currentData);
+        // Capture en direct de la valeur du champ source / canal visible à l'écran
+        const sourceField = document.querySelector('select[name="source"], input[name="source"], #source, select[id*="source"], input[id*="source"]');
+        const activeSourceValue = sourceField ? sourceField.value : '';
+
+        // Capture de l'ID client en cours de modification s'il existe
+        const idField = document.querySelector('input[name="id"], input[id*="client"]');
+        const activeId = idField ? idField.value : '';
 
         const sheetPayload = {
-          clients: (currentData.clients || []).map(c => ({
-            ID_Client: c.id || '',
-            Nom_Affichage: c.name || '',
-            Prenom: c.first || '',
-            Nom: c.last || '',
-            Entreprise: c.company || '',
-            Statut_Client: c.status || 'Actif',
-            Telephone: String(c.phone || ''),
-            Email: c.email || '',
-            Adresse_Ligne_1: c.street || '',
-            Code_Postal: String(c.postal || ''),
-            Ville: c.city || '',
-            Canal_Obtention: c.source || c.origin || c.canal || '',
-            Notes: c.notes || '',
-            Archive: c.archived ? 'Oui' : 'Non'
-          })),
+          clients: (currentData.clients || []).map(c => {
+            let finalSource = c.source || c.origin || c.canal || '';
+            if (activeId && c.id === activeId && activeSourceValue) {
+              finalSource = activeSourceValue;
+              c.source = activeSourceValue; // Met à jour l'objet local
+            }
+            return {
+              ID_Client: c.id || '',
+              Nom_Affichage: c.name || '',
+              Prenom: c.first || '',
+              Nom: c.last || '',
+              Entreprise: c.company || '',
+              Statut_Client: c.status || 'Actif',
+              Telephone: String(c.phone || ''),
+              Email: c.email || '',
+              Adresse_Ligne_1: c.street || '',
+              Code_Postal: String(c.postal || ''),
+              Ville: c.city || '',
+              Canal_Obtention: finalSource,
+              Notes: c.notes || '',
+              Archive: c.archived ? 'Oui' : 'Non'
+            };
+          }),
           chantiers: (currentData.chantiers || []).map(c => ({
             ID_Chantier: c.id || '',
             ID_Client: c.client || '',
@@ -228,14 +241,33 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
         }).then(res => res.json())
-          .then(res => console.log("Google Sheets mis à jour avec succès :", res))
-          .catch(err => console.error("Erreur envoi Google Sheets :", err));
+          .then(res => console.log("Google Sheets mis à jour en direct :", res))
+          .catch(err => console.error("Erreur sync :", err));
       } catch (e) {
-        console.error("Erreur préparation sync :", e);
+        console.error("Erreur de préparation :", e);
       }
-    }, 500);
+    }, 600);
   }
 
+  // Écoute de tous les clics de validation sur les formulaires ou popups
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+    if (target) {
+      const text = (target.innerText || target.textContent || '').toLowerCase();
+      if (text.includes('enregistrer') || text.includes('valider') || text.includes('créer') || text.includes('plus tard')) {
+        triggerGoogleSheetsSync();
+      }
+    }
+  }, true);
+
+  // Écoute des modifications de stockage local
+  const originalSetItem = localStorage.setItem;
+  localStorage.setItem = function(key, value) {
+    originalSetItem.apply(this, arguments);
+    if (key === 'alainb_pro_data' || key === 'AlainBProData') {
+      triggerGoogleSheetsSync();
+    }
+  };
   // Interception universelle des clics sur les boutons de sauvegarde
   document.addEventListener('click', function(e) {
     const target = e.target;
