@@ -19,7 +19,7 @@
         street: row.Adresse_Ligne_1 || row.street || '',
         postal: String(row.Code_Postal || row.postal || ''),
         city: row.Ville || row.city || '',
-        source: row.Canal_Obtention || row.source || '',
+        source: row.Canal_Obtention || row.Canal || row.source || row.origin || ''  //ligne modifiée
         notes: row.Notes || row.notes || '',
         archived: row.Archive === 'Oui' || row.archived === true
       };
@@ -158,7 +158,7 @@
             Adresse_Ligne_1: c.street || '',
             Code_Postal: String(c.postal || ''),
             Ville: c.city || '',
-            Canal_Obtention: c.source || c.origin || c.canal || '',
+            Canal_Obtention: c.source || c.origin || c.canal || c.acquisition || c.sourceId || '' //ligne modifiée
             Notes: c.notes || '',
             Archive: c.archived ? 'Oui' : 'Non'
           })),
