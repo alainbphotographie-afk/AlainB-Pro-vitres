@@ -1,11 +1,9 @@
 <script>
-  // Remplacez cette URL par votre lien d'exécution Google Apps Script
+  // Remplace ton URL Apps Script ici
   const API_URL = "https://script.google.com/macros/s/AKfycbyp1FZYrDgsD7JLTnEYnjnISWJfb3LF7Pl95gHo-XQmbEmZsfeuq_jM5s6hnY2MJJhu/exec"; //V5
 
-  // 1. Mappage Google Sheets -> JSON Application
   function mapSheetRowToJSON(entity, row) {
     if (!row) return {};
-    
     if (entity === 'clients') {
       return {
         id: row.ID_Client || row.id || '',
@@ -24,7 +22,6 @@
         archived: row.Archive === 'Oui' || row.archived === true
       };
     }
-    
     if (entity === 'chantiers') {
       return {
         id: row.ID_Chantier || row.id || '',
@@ -38,7 +35,6 @@
         archived: row.Archive === 'Oui' || row.archived === true
       };
     }
-
     if (entity === 'interventions') {
       return {
         id: row.ID_Intervention || row.id || '',
@@ -54,7 +50,6 @@
         archived: row.Archive === 'Oui' || row.archived === true
       };
     }
-
     if (entity === 'devis') {
       return {
         id: row.ID_Devis || row.id || '',
@@ -70,7 +65,6 @@
         archived: row.Archive === 'Oui' || row.archived === true
       };
     }
-
     if (entity === 'factures') {
       return {
         id: row.ID_Facture || row.id || '',
@@ -85,7 +79,6 @@
         archived: row.Archive === 'Oui' || row.archived === true
       };
     }
-
     if (entity === 'relances') {
       return {
         id: row.ID_Relance || row.id || '',
@@ -96,17 +89,13 @@
         notes: row.Notes || row.notes || ''
       };
     }
-
     return row;
   }
 
-  // 2. Synchronisation initiale au chargement (Google Sheets -> App)
   async function syncAndImport() {
     try {
-      console.log("Chargement initial depuis Google Sheets...");
       const response = await fetch(API_URL);
       const rawData = await response.json();
-
       const formattedData = {
         clients: (rawData.clients || []).map(r => mapSheetRowToJSON('clients', r)),
         chantiers: (rawData.chantiers || []).map(r => mapSheetRowToJSON('chantiers', r)),
@@ -116,31 +105,23 @@
         factures: (rawData.factures || []).map(r => mapSheetRowToJSON('factures', r)),
         settings: (rawData.settings && rawData.settings[0]) ? rawData.settings[0] : {}
       };
-
       const jsonStr = JSON.stringify(formattedData);
       localStorage.setItem("alainb_pro_data", jsonStr);
       localStorage.setItem("AlainBProData", jsonStr);
 
       if (typeof importJsonFile === 'function') {
-        const file = new File([jsonStr], "backup.json", { type: "application/json" });
-        importJsonFile(file);
+        importJsonFile(new File([jsonStr], "backup.json", { type: "application/json" }));
       } else if (typeof importFile === 'function') {
-        const file = new File([jsonStr], "backup.json", { type: "application/json" });
-        importFile(file);
+        importFile(new File([jsonStr], "backup.json", { type: "application/json" }));
       }
-
-      if (typeof render === 'function') {
-        render();
-      }
-      console.log("Importation initiale réussie !");
+      if (typeof render === 'function') render();
     } catch (error) {
-      console.error("Erreur d'importation Google Sheets :", error);
+      console.error("Erreur sync :", error);
     }
   }
 
   window.addEventListener("DOMContentLoaded", syncAndImport);
 
-  // 3. Synchronisation directe par lecture du formulaire ouvert
   function triggerGoogleSheetsSync() {
     setTimeout(() => {
       try {
@@ -154,7 +135,6 @@
         if (modalEl) {
           const idInput = modalEl.querySelector('input[value^="CLI-"], input[value^="LOU"], input[name="id"]');
           if (idInput) clientId = idInput.value;
-
           const selectSource = modalEl.querySelector('select');
           if (selectSource) sourceValue = selectSource.value;
         }
@@ -247,38 +227,31 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
         }).then(res => res.json())
-          .then(res => console.log("Google Sheets mis à jour en direct :", res))
-          .catch(err => console.error("Erreur sync :", err));
+          .then(res => console.log("Sync réussie :", res))
+          .catch(err => console.error("Erreur d'envoi :", err));
       } catch (e) {
-        console.error("Erreur préparation :", e);
+        console.error("Erreur :", e);
       }
     }, 400);
   }
 
-  // Écoute de tous les clics de validation
   document.addEventListener('click', function(e) {
     const target = e.target.closest('button') || e.target;
     if (target) {
       const text = (target.innerText || target.textContent || '').toLowerCase();
-      if (
-        text.includes('enregistrer') || 
-        text.includes('valider') || 
-        text.includes('créer') || 
-        text.includes('modifier') || 
-        text.includes('plus tard') ||
-        target.tagName === 'BUTTON'
-      ) {
+      if (text.includes('enregistrer') || text.includes('valider') || text.includes('créer') || text.includes('modifier') || text.includes('plus tard')) {
         triggerGoogleSheetsSync();
       }
     }
   }, true);
 
-  // Interception native du stockage local
-  const originalSetItem = localStorage.setItem;
-  localStorage.setItem = function(key, value) {
-    originalSetItem.apply(this, arguments);
-    if (key === 'alainb_pro_data' || key === 'AlainBProData') {
-      triggerGoogleSheetsSync();
-    }
-  };
+  if (typeof window.originalSetItem === 'undefined') {
+    window.originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+      window.originalSetItem.apply(this, arguments);
+      if (key === 'alainb_pro_data' || key === 'AlainBProData') {
+        triggerGoogleSheetsSync();
+      }
+    };
+  }
 </script>
