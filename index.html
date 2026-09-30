@@ -1,6 +1,6 @@
 <script>
-  // ⚠️ N'oubliez pas de remplacer cette URL par la vôtre
-  const API_URL = "https://script.google.com/macros/s/AKfycbzA0xle5yvJL-8CAd_HOw3TikzFpSRmkq_SM73K-pcaFstwjFeEdLAH6I8Atyo_uxts/exec"; //(V4)
+  // URL de ton API Google Apps Script
+  const API_URL = "https://script.google.com/macros/s/AKfycbzA0xle5yvJL-8CAd_HOw3TikzFpSRmkq_SM73K-pcaFstwjFeEdLAH6I8Atyo_uxts/exec"; //V4
 
   // 1. Mappage des colonnes Google Sheets -> Format JSON de l'application
   function mapSheetRowToJSON(entity, row) {
@@ -100,7 +100,7 @@
     return row;
   }
 
-  // 2. Synchronisation initiale (Google Sheets -> Application)
+  // 2. Importation au démarrage (Google Sheets -> App Web)
   async function syncAndImport() {
     try {
       const response = await fetch(API_URL);
@@ -132,104 +132,107 @@
         render();
       }
     } catch (error) {
-      console.error("Erreur d'importation Google Sheets :", error);
+      console.error("Erreur sync lecture :", error);
     }
   }
 
   window.addEventListener("DOMContentLoaded", syncAndImport);
 
- // 3. Interception automatique de la fonction de sauvegarde native "save"
+  // 3. Synchronisation montante vers Google Sheets (App Web -> Google Sheets)
   function triggerGoogleSheetsSync() {
-    try {
-      const currentData = JSON.parse(localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData') || '{}');
-      
-      const sheetPayload = {
-        clients: (currentData.clients || []).map(c => ({
-          ID_Client: c.id || '',
-          Nom_Affichage: c.name || '',
-          Prenom: c.first || '',
-          Nom: c.last || '',
-          Entreprise: c.company || '',
-          Statut_Client: c.status || 'Actif',
-          Telephone: String(c.phone || ''),
-          Email: c.email || '',
-          Adresse_Ligne_1: c.street || '',
-          Code_Postal: String(c.postal || ''),
-          Ville: c.city || '',
-          Canal_Obtention: c.source || '',
-          Notes: c.notes || '',
-          Archive: c.archived ? 'Oui' : 'Non'
-        })),
-        chantiers: (currentData.chantiers || []).map(c => ({
-          ID_Chantier: c.id || '',
-          ID_Client: c.client || '',
-          Nom_Chantier: c.name || '',
-          Description: c.description || '',
-          Tarif_HT: c.price || 0,
-          Duree_Estimee: c.duration || '',
-          Statut_Chantier: c.status || '',
-          Notes: c.notes || '',
-          Archive: c.archived ? 'Oui' : 'Non'
-        })),
-        interventions: (currentData.interventions || []).map(i => ({
-          ID_Intervention: i.id || '',
-          ID_Client: i.client || '',
-          ID_Chantier: i.chantier || '',
-          Date_Intervention: i.date || '',
-          Heure: i.hour || '',
-          Duree_Reelle: i.duration || '',
-          Montant: i.amount || 0,
-          Statut_Intervention: i.status || '',
-          ID_Facture: i.invoiceId || '',
-          Notes: i.notes || '',
-          Archive: i.archived ? 'Oui' : 'Non'
-        })),
-        devis: (currentData.devis || []).map(d => ({
-          ID_Devis: d.id || '',
-          ID_Client: d.client || '',
-          ID_Chantier: d.chantier || '',
-          Date_Creation: d.created || '',
-          Montant_Total: d.amount || 0,
-          Statut_Devis: d.status || '',
-          Date_Visite: d.visitDate || '',
-          Heure_Visite: d.visitHour || '',
-          Notes: d.notes || '',
-          Archive: d.archived ? 'Oui' : 'Non'
-        })),
-        factures: (currentData.factures || []).map(f => ({
-          ID_Facture: f.id || '',
-          ID_Client: f.client || '',
-          Date_Facture: f.date || '',
-          Statut_Facture: f.status || '',
-          Mode_Paiement: f.payment || '',
-          Date_Paiement: f.paidDate || '',
-          Montant_Paye: f.paidAmount || 0,
-          Notes: f.notes || '',
-          Archive: f.archived ? 'Oui' : 'Non'
-        })),
-        relances: (currentData.relances || []).map(r => ({
-          ID_Relance: r.id || '',
-          ID_Client: r.client || '',
-          Date_Relance: r.date || '',
-          Canal: r.channel || '',
-          Objet: r.subject || '',
-          Notes: r.notes || ''
-        }))
-      };
+    setTimeout(() => {
+      try {
+        const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
+        const currentData = JSON.parse(rawStorage || '{}');
 
-      fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
-      }).then(res => res.json())
-        .then(res => console.log("Synchronisation automatique réussie :", res))
-        .catch(err => console.error("Erreur de synchronisation automatique :", err));
-    } catch (e) {
-      console.error("Erreur lors de la préparation de la synchronisation :", e);
-    }
+        const sheetPayload = {
+          clients: (currentData.clients || []).map(c => ({
+            ID_Client: c.id || '',
+            Nom_Affichage: c.name || '',
+            Prenom: c.first || '',
+            Nom: c.last || '',
+            Entreprise: c.company || '',
+            Statut_Client: c.status || 'Actif',
+            Telephone: String(c.phone || ''),
+            Email: c.email || '',
+            Adresse_Ligne_1: c.street || '',
+            Code_Postal: String(c.postal || ''),
+            Ville: c.city || '',
+            Canal_Obtention: c.source || c.origin || c.canal || '',
+            Notes: c.notes || '',
+            Archive: c.archived ? 'Oui' : 'Non'
+          })),
+          chantiers: (currentData.chantiers || []).map(c => ({
+            ID_Chantier: c.id || '',
+            ID_Client: c.client || '',
+            Nom_Chantier: c.name || '',
+            Description: c.description || '',
+            Tarif_HT: c.price || 0,
+            Duree_Estimee: c.duration || '',
+            Statut_Chantier: c.status || '',
+            Notes: c.notes || '',
+            Archive: c.archived ? 'Oui' : 'Non'
+          })),
+          interventions: (currentData.interventions || []).map(i => ({
+            ID_Intervention: i.id || '',
+            ID_Client: i.client || '',
+            ID_Chantier: i.chantier || '',
+            Date_Intervention: i.date || '',
+            Heure: i.hour || '',
+            Duree_Reelle: i.duration || '',
+            Montant: i.amount || 0,
+            Statut_Intervention: i.status || '',
+            ID_Facture: i.invoiceId || '',
+            Notes: i.notes || '',
+            Archive: i.archived ? 'Oui' : 'Non'
+          })),
+          devis: (currentData.devis || []).map(d => ({
+            ID_Devis: d.id || '',
+            ID_Client: d.client || '',
+            ID_Chantier: d.chantier || '',
+            Date_Creation: d.created || '',
+            Montant_Total: d.amount || 0,
+            Statut_Devis: d.status || '',
+            Date_Visite: d.visitDate || '',
+            Heure_Visite: d.visitHour || '',
+            Notes: d.notes || '',
+            Archive: d.archived ? 'Oui' : 'Non'
+          })),
+          factures: (currentData.factures || []).map(f => ({
+            ID_Facture: f.id || '',
+            ID_Client: f.client || '',
+            Date_Facture: f.date || '',
+            Statut_Facture: f.status || '',
+            Mode_Paiement: f.payment || '',
+            Date_Paiement: f.paidDate || '',
+            Montant_Paye: f.paidAmount || 0,
+            Notes: f.notes || '',
+            Archive: f.archived ? 'Oui' : 'Non'
+          })),
+          relances: (currentData.relances || []).map(r => ({
+            ID_Relance: r.id || '',
+            ID_Client: r.client || '',
+            Date_Relance: r.date || '',
+            Canal: r.channel || '',
+            Objet: r.subject || '',
+            Notes: r.notes || ''
+          }))
+        };
+
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
+        }).then(res => res.json())
+          .then(res => console.log("Google Sheets synchronisé :", res))
+          .catch(err => console.error("Erreur d'envoi :", err));
+      } catch (e) {
+        console.error("Erreur préparation sync :", e);
+      }
+    }, 200);
   }
 
-  // Surcharge de la fonction native save
+  // Interceptions
   if (typeof window.save === 'function') {
     const originalSave = window.save;
     window.save = function() {
@@ -239,25 +242,20 @@
     };
   }
 
-  // Interception de secours sur localStorage.setItem
+  if (typeof window.saveForm === 'function') {
+    const originalSaveForm = window.saveForm;
+    window.saveForm = function() {
+      const result = originalSaveForm.apply(this, arguments);
+      triggerGoogleSheetsSync();
+      return result;
+    };
+  }
+
   const originalSetItem = localStorage.setItem;
   localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
     if (key === 'alainb_pro_data' || key === 'AlainBProData') {
       triggerGoogleSheetsSync();
-    }
-  };
-        fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
-        }).then(res => res.json())
-          .then(res => console.log("Réponse enregistrement Google Sheets :", res))
-          .catch(err => console.error("Erreur envoi Google Sheets :", err));
-
-      } catch (e) {
-        console.error("Erreur lors de l'interception :", e);
-      }
     }
   };
 </script>
