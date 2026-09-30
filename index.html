@@ -254,7 +254,133 @@
     triggerGoogleSheetsSync();
   }, true);
 
-  // 3. Interception native localStorage
+  // 3. Synchronisation bidirectionnelle et capture directe des formulaires
+  function triggerGoogleSheetsSync() {
+    setTimeout(() => {
+      try {
+        const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
+        const currentData = JSON.parse(rawStorage || '{}');
+
+        // Récupération directe de la valeur sélectionnée dans le champ "source" ou "canal" du formulaire s'il est ouvert
+        const sourceInput = document.querySelector('select[name="source"], select[name="canal"], select[id*="source"], select[id*="canal"]');
+        let activeSourceValue = sourceInput ? sourceInput.value : '';
+
+        // Récupération de l'ID du client en cours d'édition dans le formulaire
+        const idInput = document.querySelector('input[name="id"], input[id*="client-id"]');
+        let activeClientId = idInput ? idInput.value : '';
+
+        const sheetPayload = {
+          clients: (currentData.clients || []).map(c => {
+            // Si c'est le client en cours de modification et qu'une source est choisie dans l'IHM
+            let canalValue = c.source || c.origin || c.canal || '';
+            if (c.id === activeClientId && activeSourceValue) {
+              canalValue = activeSourceValue;
+              c.source = activeSourceValue; // Met à jour l'objet local
+            }
+
+            return {
+              ID_Client: c.id || '',
+              Nom_Affichage: c.name || '',
+              Prenom: c.first || '',
+              Nom: c.last || '',
+              Entreprise: c.company || '',
+              Statut_Client: c.status || 'Actif',
+              Telephone: String(c.phone || ''),
+              Email: c.email || '',
+              Adresse_Ligne_1: c.street || '',
+              Code_Postal: String(c.postal || ''),
+              Ville: c.city || '',
+              Canal_Obtention: canalValue,
+              Notes: c.notes || '',
+              Archive: c.archived ? 'Oui' : 'Non'
+            };
+          }),
+          chantiers: (currentData.chantiers || []).map(c => ({
+            ID_Chantier: c.id || '',
+            ID_Client: c.client || '',
+            Nom_Chantier: c.name || '',
+            Description: c.description || '',
+            Tarif_HT: c.price || 0,
+            Duree_Estimee: c.duration || '',
+            Statut_Chantier: c.status || '',
+            Notes: c.notes || '',
+            Archive: c.archived ? 'Oui' : 'Non'
+          })),
+          interventions: (currentData.interventions || []).map(i => ({
+            ID_Intervention: i.id || '',
+            ID_Client: i.client || '',
+            ID_Chantier: i.chantier || '',
+            Date_Intervention: i.date || '',
+            Heure: i.hour || '',
+            Duree_Reelle: i.duration || '',
+            Montant: i.amount || 0,
+            Statut_Intervention: i.status || '',
+            ID_Facture: i.invoiceId || '',
+            Notes: i.notes || '',
+            Archive: i.archived ? 'Oui' : 'Non'
+          })),
+          devis: (currentData.devis || []).map(d => ({
+            ID_Devis: d.id || '',
+            ID_Client: d.client || '',
+            ID_Chantier: d.chantier || '',
+            Date_Creation: d.created || '',
+            Montant_Total: d.amount || 0,
+            Statut_Devis: d.status || '',
+            Date_Visite: d.visitDate || '',
+            Heure_Visite: d.visitHour || '',
+            Notes: d.notes || '',
+            Archive: d.archived ? 'Oui' : 'Non'
+          })),
+          factures: (currentData.factures || []).map(f => ({
+            ID_Facture: f.id || '',
+            ID_Client: f.client || '',
+            Date_Facture: f.date || '',
+            Statut_Facture: f.status || '',
+            Mode_Paiement: f.payment || '',
+            Date_Paiement: f.paidDate || '',
+            Montant_Paye: f.paidAmount || 0,
+            Notes: f.notes || '',
+            Archive: f.archived ? 'Oui' : 'Non'
+          })),
+          relances: (currentData.relances || []).map(r => ({
+            ID_Relance: r.id || '',
+            ID_Client: r.client || '',
+            Date_Relance: r.date || '',
+            Canal: r.channel || '',
+            Objet: r.subject || '',
+            Notes: r.notes || ''
+          }))
+        };
+
+        fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
+        }).then(res => res.json())
+          .then(res => console.log("Google Sheets synchronisé avec succès :", res))
+          .catch(err => console.error("Erreur d'envoi vers Google Sheets :", err));
+      } catch (e) {
+        console.error("Erreur lors de la préparation :", e);
+      }
+    }, 500);
+  }
+
+  // Déclenchement sur fermeture/validation des fenêtres modales
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+    if (target && (
+      target.innerText?.toLowerCase().includes('enregistrer') ||
+      target.innerText?.toLowerCase().includes('valider') ||
+      target.innerText?.toLowerCase().includes('créer') ||
+      target.innerText?.toLowerCase().includes('plus tard') ||
+      target.classList.contains('btn') ||
+      target.tagName === 'BUTTON'
+    )) {
+      triggerGoogleSheetsSync();
+    }
+  }, true);
+
+  // Écoute de la sauvegarde native
   const originalSetItem = localStorage.setItem;
   localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
