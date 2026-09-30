@@ -140,27 +140,36 @@
 
   window.addEventListener("DOMContentLoaded", syncAndImport);
 
-  // 3. Fonction définitive de synchronisation et de capture directe des formulaires
+ // 3. Synchronisation directe par lecture du formulaire ouvert
   function triggerGoogleSheetsSync() {
     setTimeout(() => {
       try {
         const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
         const currentData = JSON.parse(rawStorage || '{}');
 
-        // Capture en direct de la valeur du champ source / canal visible à l'écran
-        const sourceField = document.querySelector('select[name="source"], input[name="source"], #source, select[id*="source"], input[id*="source"]');
-        const activeSourceValue = sourceField ? sourceField.value : '';
+        // Récupération directe de l'ID du client en cours d'édition dans la modale
+        const modalEl = document.querySelector('.modal, div[class*="modal"], div[class*="dialog"], form');
+        let clientId = "";
+        let sourceValue = "";
 
-        // Capture de l'ID client en cours de modification s'il existe
-        const idField = document.querySelector('input[name="id"], input[id*="client"]');
-        const activeId = idField ? idField.value : '';
+        if (modalEl) {
+          // Cherche l'ID (souvent dans le premier champ ou un input caché)
+          const idInput = modalEl.querySelector('input[value^="CLI-"], input[value^="LOU"], input[name="id"]');
+          if (idInput) clientId = idInput.value;
 
-        const sheetPayload = {
-          clients: (currentData.clients || []).map(c => {
-            let finalSource = c.source || c.origin || c.canal || '';
-            if (activeId && c.id === activeId && activeSourceValue) {
-              finalSource = activeSourceValue;
-              c.source = activeSourceValue; // Met à jour l'objet local
+          // Cherche la valeur actuelle du champ source / canal dans le formulaire ouvert
+          const sourceInput = modalEl.querySelector('select[name="source"], input[name="source"], select, input[type="text"]');
+          // On cherche spécifiquement un élément qui contient la valeur sélectionnée
+          const selectSource = modalEl.querySelector('select');
+          if (selectSource) sourceValue = selectSource.value;
+        }
+
+        // Si on a un client dans le localStorage, on met à jour sa source avec la valeur lue à l'écran
+        if (currentData.clients) {
+          currentData.clients = currentData.clients.map(c => {
+            // Si c'est le client affiché ou le premier client modifiable détecté
+            if ((clientId && c.id === clientId) || currentData.clients.length === 1) {
+              if (sourceValue) c.source = sourceValue;
             }
             return {
               ID_Client: c.id || '',
@@ -174,11 +183,15 @@
               Adresse_Ligne_1: c.street || '',
               Code_Postal: String(c.postal || ''),
               Ville: c.city || '',
-              Canal_Obtention: finalSource,
+              Canal_Obtention: c.source || c.origin || c.canal || '',
               Notes: c.notes || '',
               Archive: c.archived ? 'Oui' : 'Non'
             };
-          }),
+          });
+        }
+
+        const sheetPayload = {
+          clients: currentData.clients || [],
           chantiers: (currentData.chantiers || []).map(c => ({
             ID_Chantier: c.id || '',
             ID_Client: c.client || '',
@@ -244,10 +257,28 @@
           .then(res => console.log("Google Sheets mis à jour en direct :", res))
           .catch(err => console.error("Erreur sync :", err));
       } catch (e) {
-        console.error("Erreur de préparation :", e);
+        console.error("Erreur préparation :", e);
       }
-    }, 600);
+    }, 400);
   }
+
+  // Écoute de tous les clics de validation
+  document.addEventListener('click', function(e) {
+    const target = e.target.closest('button') || e.target;
+    if (target) {
+      const text = (target.innerText || target.textContent || '').toLowerCase();
+      if (
+        text.includes('enregistrer') || 
+        text.includes('valider') || 
+        text.includes('créer') || 
+        text.includes('modifier') || 
+        text.includes('plus tard') ||
+        target.tagName === 'BUTTON'
+      ) {
+        triggerGoogleSheetsSync();
+      }
+    }
+  }, true);
 
   // Écoute de tous les clics de validation sur les formulaires ou popups
   document.addEventListener('click', function(e) {
