@@ -19,7 +19,7 @@
         street: row.Adresse_Ligne_1 || row.street || '',
         postal: String(row.Code_Postal || row.postal || ''),
         city: row.Ville || row.city || '',
-        source: row.Canal_Obtention || row.Canal || row.source || row.origin || ''  //ligne modifiée
+        source: row.Canal_Obtention || row.Canal || row.source || row.origin || '',  //ligne modifiée
         notes: row.Notes || row.notes || '',
         archived: row.Archive === 'Oui' || row.archived === true
       };
