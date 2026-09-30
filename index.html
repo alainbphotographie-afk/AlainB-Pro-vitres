@@ -30,9 +30,9 @@
           chantiers: (currentData.chantiers || []).map(c => ({
             ID_Chantier: c.id || '',
             ID_Client: c.client || '',
-            Nom_Chantier: c.name || '',
-            Description: c.description || '',
-            Tarif_HT: c.price || 0,
+            Type_Chantier: c.name || '',               // Correspond à la colonne Google Sheet
+            Description_Technique: c.description || '', // Correspond à la colonne Google Sheet
+            Prix_Defaut: c.price || 0,
             Duree_Estimee: c.duration || '',
             Statut_Chantier: c.status || '',
             Notes: c.notes || '',
