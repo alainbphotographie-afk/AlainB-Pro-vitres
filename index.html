@@ -138,12 +138,15 @@
 
   window.addEventListener("DOMContentLoaded", syncAndImport);
 
-  // 3. Synchronisation montante vers Google Sheets (App Web -> Google Sheets)
+  // 3. Synchronisation bidirectionnelle et interception globale des sauvegardes
   function triggerGoogleSheetsSync() {
+    // Un léger délai permet à l'application de valider toutes ses données internes
     setTimeout(() => {
       try {
         const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
         const currentData = JSON.parse(rawStorage || '{}');
+
+        console.log("Synchronisation Google Sheets en cours avec les données :", currentData);
 
         const sheetPayload = {
           clients: (currentData.clients || []).map(c => ({
@@ -158,7 +161,7 @@
             Adresse_Ligne_1: c.street || '',
             Code_Postal: String(c.postal || ''),
             Ville: c.city || '',
-            Canal_Obtention: c.source || c.origin || c.canal || c.acquisition || c.sourceId || '' //ligne modifiée
+            Canal_Obtention: c.source || c.origin || c.canal || '',
             Notes: c.notes || '',
             Archive: c.archived ? 'Oui' : 'Non'
           })),
@@ -224,33 +227,34 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
         }).then(res => res.json())
-          .then(res => console.log("Google Sheets synchronisé :", res))
-          .catch(err => console.error("Erreur d'envoi :", err));
+          .then(res => console.log("Google Sheets synchronisé avec succès :", res))
+          .catch(err => console.error("Erreur d'envoi vers Google Sheets :", err));
       } catch (e) {
-        console.error("Erreur préparation sync :", e);
+        console.error("Erreur lors de la préparation de la synchronisation :", e);
       }
-    }, 200);
+    }, 400); // Délai de 400ms pour garantir l'enregistrement complet de la pop-up
   }
 
-  // Interceptions
-  if (typeof window.save === 'function') {
-    const originalSave = window.save;
-    window.save = function() {
-      const result = originalSave.apply(this, arguments);
+  // 1. Interception des clics sur les boutons de validation et fenêtres modales
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+    if (target && (
+      target.innerText?.toLowerCase().includes('enregistrer') ||
+      target.innerText?.toLowerCase().includes('valider') ||
+      target.innerText?.toLowerCase().includes('créer') ||
+      target.innerText?.toLowerCase().includes('plus tard') ||
+      target.tagName === 'BUTTON'
+    )) {
       triggerGoogleSheetsSync();
-      return result;
-    };
-  }
+    }
+  }, true);
 
-  if (typeof window.saveForm === 'function') {
-    const originalSaveForm = window.saveForm;
-    window.saveForm = function() {
-      const result = originalSaveForm.apply(this, arguments);
-      triggerGoogleSheetsSync();
-      return result;
-    };
-  }
+  // 2. Interception de la soumission de tout formulaire
+  document.addEventListener('submit', function() {
+    triggerGoogleSheetsSync();
+  }, true);
 
+  // 3. Interception native localStorage
   const originalSetItem = localStorage.setItem;
   localStorage.setItem = function(key, value) {
     originalSetItem.apply(this, arguments);
