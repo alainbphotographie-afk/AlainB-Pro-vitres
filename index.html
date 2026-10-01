@@ -80,7 +80,7 @@ th{font-size:12px;color:#5d7188;background:#f7f9fb;white-space:nowrap}
 </head>
 <body>
 <aside class="side" id="side">
-  <div class="brand"><div class="mark">✦</div><div><b>AlainB Pro</b><small>CLOUD GOOGLE SHEETS — V15</small></div></div>
+  <div class="brand"><div class="mark">✦</div><div><b>AlainB Pro</b><small>CLOUD GOOGLE SHEETS — V16</small></div></div>
   <nav class="nav">
     <button data-p="dash" class="active">⌂ &nbsp; Tableau de bord</button>
     <button data-p="clients">♙ &nbsp; Clients</button>
@@ -112,7 +112,7 @@ th{font-size:12px;color:#5d7188;background:#f7f9fb;white-space:nowrap}
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script>
   // URL de votre script Google Apps Script de référence
-  const API_URL = "https://script.google.com/macros/s/AKfycbyovnX4Taq8vX7gtW3t5b7pu1Ky5z-8LTFN5q1Bz4YqD3ID6mJiz34Pfj99CC9tFmHk/exec"; //V15
+  const API_URL = "https://script.google.com/macros/s/AKfycbwtZjv-sXTXgGxcbfjuI1y4fKc4V7ETLcd2ZGpd9OKatpJT-uHzk2UipL0FbvzdnbaA/exec"; //V16
 
   const todayLocal = (() => { let d = new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') })();
   const S = { p: 'dash', filter: 'all', invoiceClient: '', d: { clients: [], chantiers: [], devis: [], interventions: [], relances: [], factures: [], parametres: [] }, ref: todayLocal };
