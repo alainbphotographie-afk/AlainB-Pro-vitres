@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AlainB Pro — V18</title>
+  <title>AlainB Pro — V18.1</title>
   <style>
     :root {
       --nav: #102038;
@@ -1210,8 +1210,8 @@
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script>
-    // URL de votre script Google Apps Script (V11 bis)
-    const API_URL = "https://script.google.com/macros/s/AKfycbz-AeTqw6oBKlgjwEUTgrWAo4STJ0jFISI_lGTsB--mTrjXJ2yBO13hIXuUwWiV2suM/exec"; //V18
+    // URL de votre script Google Apps Script (V18)
+    const API_URL = "https://script.google.com/macros/s/AKfycbz-AeTqw6oBKlgjwEUTgrWAo4STJ0jFISI_lGTsB--mTrjXJ2yBO13hIXuUwWiV2suM/exec";
 
     const todayLocal = (() => { let d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') })(); 
     const S = { p: 'dash', filter: 'all', invoiceClient: '', d: { clients: [], chantiers: [], devis: [], interventions: [], relances: [], factures: [] }, file: 'Google Sheets Live', ref: todayLocal }; 
@@ -1222,7 +1222,7 @@
     const eur = x => num(x).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }); 
     function fdate(x) { if (!x) return '—'; let d = new Date(x + 'T12:00:00'); return isNaN(d) ? x : new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(d) } 
     function g(o, n) { for (let k in o) if (n.some(a => a.toLowerCase() === k.toLowerCase())) return String(o[k] ?? '').trim(); return '' } 
-    function nd(v) { v = String(v || '').trim(); let a = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (a) return a[1] + '-' + a[2].padStart(2, '0' ) + '-' + a[3].padStart(2, '0'); a = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return a ? a[3] + '-' + a[2].padStart(2, '0') + '-' + a[1].padStart(2, '0') : v } 
+    function nd(v) { v = String(v || '').trim(); let a = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (a) return a[1] + '-' + a[2].padStart(2, '0' ) + '-' + a[3].padStart(2, '0'); a = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return a ? a[3] + '-' + a[2].padStart(2, '0' ) + '-' + a[1].padStart(2, '0') : v } 
     function client(id) { return S.d.clients.find(x => cid(x.id) === cid(id)) } 
     function chantier(id) { return S.d.chantiers.find(x => cid(x.id) === cid(id)) } 
     function cname(id) { return client(id)?.name || id || 'Client inconnu' } 
@@ -1299,7 +1299,6 @@
             S.d.factures = data.factures || [];
             S.d.relances = data.relances || [];
             if(statusEl) statusEl.innerText = "● Connecté (Google Sheets)";
-            // Rafraîchir l'affichage courant si besoin
             if(typeof render === 'function') render();
           } else {
             fallbackLocal();
@@ -1321,9 +1320,10 @@
       if(typeof render === 'function') render();
     }
 
-    document.getElementById('syncbtn').onclick = () => {
-      loadFromGoogleSheets();
-    };
+    const syncBtn = document.getElementById('syncbtn');
+    if(syncBtn) {
+      syncBtn.onclick = () => { loadFromGoogleSheets(); };
+    }
 
     // Lancement au démarrage
     window.addEventListener('DOMContentLoaded', () => {
