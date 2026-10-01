@@ -1,120 +1,10 @@
-<script>
-  // URL de votre script Google Apps Script
-  const API_URL = "https://script.google.com/macros/s/AKfycbwFtr328T8DLdCkEVkGnmiDbX_zNz4tIVEwUGOb1hopT-rQHliYmrWOahoRCkT21ZW8/exec";  //V11 bis  
-
-  // Fonction de synchronisation déclenchée lors de la validation d'un formulaire
-  function triggerGoogleSheetsSync() {
-    setTimeout(() => {
-      try {
-        const rawStorage = localStorage.getItem('alainb_pro_data') || localStorage.getItem('AlainBProData');
-        if (!rawStorage) return;
-        const currentData = JSON.parse(rawStorage);
-
-        const sheetPayload = {
-          clients: (currentData.clients || []).map(c => ({
-            ID_Client: c.id || '',
-            Nom_Affichage: c.name || '',
-            Prenom: c.first || '',
-            Nom: c.last || '',
-            Entreprise: c.company || '',
-            Statut_Client: c.status || 'Actif',
-            Telephone: String(c.phone || ''),
-            Email: c.email || '',
-            Adresse_Ligne_1: c.street || '',
-            Code_Postal: String(c.postal || ''),
-            Ville: c.city || '',
-            Canal_Obtention: c.source || c.origin || c.canal || '',
-            Notes: c.notes || '',
-            Archive: c.archived ? 'Oui' : 'Non'
-          })),
-          chantiers: (currentData.chantiers || []).map(c => ({
-            ID_Chantier: c.id || '',
-            ID_Client: c.client || '',
-            Type_Chantier: c.name || '',           // Correspond à la colonne Google Sheet
-            Description_Technique: c.description || '', // Correspond à la colonne Google Sheet
-            Prix_Defaut: c.price || 0,
-            Duree_Estimee: c.duration || '',
-            Statut_Chantier: c.status || '',
-            Notes: c.notes || '',
-            Archive: c.archived ? 'Oui' : 'Non'
-          })),
-          interventions: (currentData.interventions || []).map(i => ({
-            ID_Intervention: i.id || '',
-            ID_Client: i.client || '',
-            ID_Chantier: i.chantier || '',
-            Date_Intervention: i.date || '',
-            Heure: i.hour || '',
-            Duree_Reelle: i.duration || '',
-            Montant: i.amount || 0,
-            Statut_Intervention: i.status || '',
-            ID_Facture: i.invoiceId || '',
-            Notes: i.notes || '',
-            Archive: i.archived ? 'Oui' : 'Non'
-          })),
-          devis: (currentData.devis || []).map(d => ({
-            ID_Devis: d.id || '',
-            ID_Client: d.client || '',
-            ID_Chantier: d.chantier || '',
-            Date_Creation: d.created || '',
-            Montant_Total: d.amount || 0,
-            Statut_Devis: d.status || '',
-            Date_Visite: d.visitDate || '',
-            Heure_Visite: d.visitHour || '',
-            Notes: d.notes || '',
-            Archive: d.archived ? 'Oui' : 'Non'
-          })),
-          factures: (currentData.factures || []).map(f => ({
-            ID_Facture: f.id || '',
-            ID_Client: f.client || '',
-            Date_Facture: f.date || '',
-            Statut_Facture: f.status || '',
-            Mode_Paiement: f.payment || '',
-            Date_Paiement: f.paidDate || '',
-            Montant_Paye: f.paidAmount || 0,
-            Notes: f.notes || '',
-            Archive: f.archived ? 'Oui' : 'Non'
-          })),
-          relances: (currentData.relances || []).map(r => ({
-            ID_Relance: r.id || '',
-            ID_Client: r.client || '',
-            Date_Relance: r.date || '',
-            Canal: r.channel || '',
-            Objet: r.subject || '',
-            Notes: r.notes || ''
-          }))
-        };
-
-        fetch(API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
-        }).then(res => res.json())
-          .then(res => console.log("Google Sheets mis à jour avec succès :", res))
-          .catch(err => console.error("Erreur de synchronisation :", err));
-      } catch (e) {
-        console.error("Erreur de préparation des données :", e);
-      }
-    }, 500);
-  }
-
-  // Écoute des clics sur les boutons de validation pour déclencher l'envoi
-  document.addEventListener('click', function (e) {
-    const target = e.target.closest('button') || e.target;
-    if (target) {
-      const text = (target.innerText || target.textContent || '').toLowerCase();
-      if (text.includes('enregistrer') || text.includes('valider') || text.includes('créer') || text.includes('modifier')) {
-        triggerGoogleSheetsSync();
-      }
-    }
-  }, true);
-</script>
 <!doctype html>
 <html lang="fr">
 
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>AlainB Pro — V1.6.40</title>
+  <title>AlainB Pro — V18</title>
   <style>
     :root {
       --nav: #102038;
@@ -1287,22 +1177,29 @@
   <aside class="side" id="side">
     <div class="brand">
       <div class="mark">✦</div>
-      <div><b>AlainB Pro</b><small>GESTION LOCALE — V1.6.40</small></div>
+      <div><b>AlainB Pro</b><small>GOOGLE SHEETS — V1.6.40</small></div>
     </div>
-    <nav class="nav"><button data-p="dash" class="active">⌂ &nbsp; Tableau de bord</button><button data-p="clients">♙
-        &nbsp; Clients</button><button data-p="chantiers">▣ &nbsp; Chantiers</button><button data-p="devis">▤ &nbsp;
-        Devis</button><button data-p="interventions">▣ &nbsp; Interventions</button><button data-p="ca">◉ &nbsp; Chiffre
-        d'affaires</button>
-      <div class="cap">GESTION DOCUMENTAIRE</div><button data-p="factures">▧ &nbsp; Factures</button><button
-        data-p="documents">▤ &nbsp; Documents comptables</button><button data-p="backup">⇩ &nbsp; Sauvegarde &
-        import</button><button data-p="settings">⚙ &nbsp; Paramètres entreprise</button>
+    <nav class="nav">
+      <button data-p="dash" class="active">⌂ &nbsp; Tableau de bord</button>
+      <button data-p="clients">♙ &nbsp; Clients</button>
+      <button data-p="chantiers">▣ &nbsp; Chantiers</button>
+      <button data-p="devis">▤ &nbsp; Devis</button>
+      <button data-p="interventions">▣ &nbsp; Interventions</button>
+      <button data-p="ca">◉ &nbsp; Chiffre d'affaires</button>
+      <div class="cap">GESTION DOCUMENTAIRE</div>
+      <button data-p="factures">▧ &nbsp; Factures</button>
+      <button data-p="documents">▤ &nbsp; Documents comptables</button>
+      <button data-p="backup">⇩ &nbsp; Sauvegarde & import</button>
+      <button data-p="settings">⚙ &nbsp; Paramètres entreprise</button>
     </nav>
-    <div class="foot"><b>Mode local sécurisé</b><span id="status">● Aucune donnée importée</span></div>
+    <div class="foot"><b>Google Sheets Sync</b><span id="status">● Connexion en cours...</span></div>
   </aside>
   <main class="main">
-    <header class="top"><button class="mobile" id="menu">☰</button><span class="soft">AlainB Pro Local</span>&nbsp; /
-      &nbsp;<b id="pagetitle">Tableau de bord</b>
+    <header class="top">
+      <button class="mobile" id="menu">☰</button>
+      <span class="soft">AlainB Pro Google</span>&nbsp; / &nbsp;<b id="pagetitle">Tableau de bord</b>
       <div class="right">
+        <button class="btn alt" id="syncbtn" style="padding:6px 10px; font-size:12px;">🔄 Forcer Synchro Google Sheet</button>
         <div class="pill" id="datepill"></div>
         <div class="pill" id="countpill"></div>
       </div>
@@ -1310,10 +1207,14 @@
     <div class="page" id="root"></div>
   </main>
   <div id="modal"></div>
+
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script>
+    // URL de votre script Google Apps Script (V11 bis)
+    const API_URL = "https://script.google.com/macros/s/AKfycbwFtr328T8DLdCkEVkGnmiDbX_zNz4tIVEwUGOb1hopT-rQHliYmrWOahoRCkT21ZW8/exec";
+
     const todayLocal = (() => { let d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') })(); 
-    const S = { p: 'dash', filter: 'all', invoiceClient: '', d: { clients: [], chantiers: [], devis: [], interventions: [], relances: [], factures: [] }, file: '', ref: todayLocal }; 
+    const S = { p: 'dash', filter: 'all', invoiceClient: '', d: { clients: [], chantiers: [], devis: [], interventions: [], relances: [], factures: [] }, file: 'Google Sheets Live', ref: todayLocal }; 
     const R = document.getElementById('root'), M = document.getElementById('modal'); 
     const esc = x => String(x ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); 
     const cid = x => String(x || '').trim().toUpperCase(); 
@@ -1321,27 +1222,113 @@
     const eur = x => num(x).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' }); 
     function fdate(x) { if (!x) return '—'; let d = new Date(x + 'T12:00:00'); return isNaN(d) ? x : new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(d) } 
     function g(o, n) { for (let k in o) if (n.some(a => a.toLowerCase() === k.toLowerCase())) return String(o[k] ?? '').trim(); return '' } 
-    function nd(v) { v = String(v || '').trim(); let a = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (a) return a[1] + '-' + a[2].padStart(2, '0') + '-' + a[3].padStart(2, '0'); a = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return a ? a[3] + '-' + a[2].padStart(2, '0') + '-' + a[1].padStart(2, '0') : v } 
+    function nd(v) { v = String(v || '').trim(); let a = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if (a) return a[1] + '-' + a[2].padStart(2, '0' ) + '-' + a[3].padStart(2, '0'); a = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return a ? a[3] + '-' + a[2].padStart(2, '0') + '-' + a[1].padStart(2, '0') : v } 
     function client(id) { return S.d.clients.find(x => cid(x.id) === cid(id)) } 
     function chantier(id) { return S.d.chantiers.find(x => cid(x.id) === cid(id)) } 
     function cname(id) { return client(id)?.name || id || 'Client inconnu' } 
     function chname(id) { return chantier(id)?.name || id || 'Chantier inconnu' } 
     function tag(x) { let s = String(x || ''), l = s.toLowerCase(), c = l.includes('régl') || l.includes('pay') || l.includes('accept') ? 'green' : l.includes('annul') || l.includes('refus') ? 'red' : l.includes('émis') || l.includes('envoy') || l.includes('factur') ? 'gold' : ''; return '<span class="tag ' + c + '">' + esc(s || '—') + '</span>' } 
     function active(a) { return a.filter(x => !x.archived) } 
-    function save() { localStorage.setItem('abp_v163_data', JSON.stringify(S.d)); localStorage.setItem('abp_v163_file', S.file) } 
+    
+    // Sauvegarde locale + déclenchement de la synchro Google Sheets
+    function save() { 
+      localStorage.setItem('alainb_pro_data', JSON.stringify(S.d)); 
+      localStorage.setItem('alainb_pro_file', S.file);
+      triggerGoogleSheetsSync();
+    } 
+
     function pop(t, b) { M.innerHTML = '<div class="modalbg"><div class="modal"><button class="xclose" id="mx">×</button><h2>' + esc(t) + '</h2>' + b + '</div></div>'; document.getElementById('mx').onclick = () => M.innerHTML = '' } 
     function invoiceTotal(f) { return (f.interventions || []).map(id => S.d.interventions.find(x => cid(x.id) === cid(id))).filter(Boolean).reduce((a, x) => a + num(x.amount), 0) } 
-    function unbilledInterventions(clientId) { return active(S.d.interventions).filter(i => cid(i.client) === cid(clientId) && !i.invoiceId && interventionStatusClass(i.status) === 'done') } 
+    function unbilledInterventions(clientId) { return active(S.d.interventions).filter(i => cid(i.client) === cid(clientId) && !i.invoiceId) } 
     function linkInvoices() { S.d.factures.forEach(f => (f.interventions || []).forEach(id => { let x = S.d.interventions.find(y => cid(y.id) === cid(id)); if (x) x.invoiceId = f.id })) } 
-    function normalize(sheet, rows) { 
-      let n = sheet.toLowerCase(); 
-      if (n.includes('client')) return rows.map(r => ({ id: g(r, ['ID_Client', 'id']), name: g(r, ['Nom_Affichage']) || [g(r, ['Entreprise']), [g(r, ['Prenom']), g(r, ['Nom'])].filter(Boolean).join(' ')].filter(Boolean).join(' — ') || g(r, ['ID_Client']), first: g(r, ['Prenom']), last: g(r, ['Nom']), company: g(r, ['Entreprise']), status: g(r, ['Statut_Client', 'Statut']) || 'Actif', phone: g(r, ['Telephone', 'Telephone_Principal']), email: g(r, ['Email']), street: g(r, ['Adresse_Ligne_1', 'Adresse']), postal: g(r, ['Code_Postal', 'CP']), city: g(r, ['Ville']), source: g(r, ['Canal_Obtention', 'CanalObtention', 'Canal d’obtention', 'OrigineClient', 'Source']), notes: g(r, ['Notes']), archived: g(r, ['Archive']) === 'Oui' })); 
-      if (n.includes('chant')) return rows.map(r => ({ id: g(r, ['ID_Chantier', 'id']), client: g(r, ['ID_Client']), name: g(r, ['Type_Chantier', 'Nom']), description: g(r, ['Description_Technique', 'Descriptif']), price: num(g(r, ['Prix_Defaut', 'Prix'])), duration: g(r, ['Duree_Estimee', 'Duree']), status: g(r, ['Statut_Chantier', 'Statut']) || 'À planifier', notes: g(r, ['Notes']), archived: g(r, ['Archive']) === 'Oui' })); 
-      if (n.includes('devis')) return rows.map(r => ({ id: g(r, ['ID_Devis', 'id']), client: g(r, ['ID_Client']), chantier: g(r, ['ID_Chantier']), chantiers: (g(r, ['ID_Chantiers', 'Chantiers']) || g(r, ['ID_Chantier'])).split('|').map(v => v.trim()).filter(Boolean), created: nd(g(r, ['Date_Creation', 'Date'])), amount: num(g(r, ['Montant'])), status: g(r, ['Statut_Devis', 'Statut']) || 'En cours', visitDate: nd(g(r, ['Date_Visite', 'DateVisite'])), visitHour: g(r, ['Heure_Visite', 'HeureVisite']), notes: g(r, ['Notes']), archived: g(r, ['Archive']) === 'Oui' })); 
-      if (n.includes('intervention')) return rows.map(r => ({ id: g(r, ['ID_Intervention', 'id']), client: g(r, ['ID_Client']), chantier: g(r, ['ID_Chantier']), date: nd(g(r, ['Date_Prevue', 'Date'])), hour: g(r, ['Heure']), duration: g(r, ['Duree_Estimee', 'Duree']), amount: num(g(r, ['Montant'])), status: g(r, ['Statut_Intervention', 'Statut']) || 'Planifiée', invoiceId: g(r, ['ID_Facture']), notes: g(r, ['Notes']), archived: g(r, ['Archive']) === 'Oui' })); 
-      if (n.includes('facture')) return rows.map(r => ({ id: g(r, ['ID_Facture', 'id']), client: g(r, ['ID_Client']), date: nd(g(r, ['Date_Facture', 'Date'])), status: g(r, ['Statut_Facture', 'Statut']) || 'Émise', payment: g(r, ['Mode_Paiement', 'ModePaiement']), paidDate: nd(g(r, ['Date_Paiement', 'DatePaiement'])), paidAmount: num(g(r, ['Montant_Paye', 'MontantPaye'])), notes: g(r, ['Notes']), archived: g(r, ['Archive']) === 'Oui' })); 
-      return rows; 
+
+    // --- SYNCHRONISATION GOOGLE SHEETS ---
+    function triggerGoogleSheetsSync() {
+      const statusEl = document.getElementById('status');
+      if(statusEl) statusEl.innerText = "● Synchronisation en cours...";
+      
+      const sheetPayload = {
+        clients: (S.d.clients || []).map(c => ({
+          ID_Client: c.id || '', Nom_Affichage: c.name || '', Prenom: c.first || '', Nom: c.last || '', Entreprise: c.company || '', Statut_Client: c.status || 'Actif', Telephone: String(c.phone || ''), Email: c.email || '', Adresse_Ligne_1: c.street || '', Code_Postal: String(c.postal || ''), Ville: c.city || '', Canal_Obtention: c.source || '', Notes: c.notes || '', Archive: c.archived ? 'Oui' : 'Non'
+        })),
+        chantiers: (S.d.chantiers || []).map(c => ({
+          ID_Chantier: c.id || '', ID_Client: c.client || '', Type_Chantier: c.name || '', Description_Technique: c.description || '', Prix_Defaut: c.price || 0, Duree_Estimee: c.duration || '', Statut_Chantier: c.status || '', Notes: c.notes || '', Archive: c.archived ? 'Oui' : 'Non'
+        })),
+        interventions: (S.d.interventions || []).map(i => ({
+          ID_Intervention: i.id || '', ID_Client: i.client || '', ID_Chantier: i.chantier || '', Date_Intervention: i.date || '', Heure: i.hour || '', Duree_Reelle: i.duration || '', Montant: i.amount || 0, Statut_Intervention: i.status || '', ID_Facture: i.invoiceId || '', Notes: i.notes || '', Archive: i.archived ? 'Oui' : 'Non'
+        })),
+        devis: (S.d.devis || []).map(d => ({
+          ID_Devis: d.id || '', ID_Client: d.client || '', ID_Chantier: d.chantier || '', Date_Creation: d.created || '', Montant_Total: d.amount || 0, Statut_Devis: d.status || '', Date_Visite: d.visitDate || '', Heure_Visite: d.visitHour || '', Notes: d.notes || '', Archive: d.archived ? 'Oui' : 'Non'
+        })),
+        factures: (S.d.factures || []).map(f => ({
+          ID_Facture: f.id || '', ID_Client: f.client || '', Date_Facture: f.date || '', Statut_Facture: f.status || '', Mode_Paiement: f.payment || '', Date_Paiement: f.paidDate || '', Montant_Paye: f.paidAmount || 0, Notes: f.notes || '', Archive: f.archived ? 'Oui' : 'Non'
+        })),
+        relances: (S.d.relances || []).map(r => ({
+          ID_Relance: r.id || '', ID_Client: r.client || '', Date_Relance: r.date || '', Canal: r.channel || '', Objet: r.subject || '', Notes: r.notes || ''
+        }))
+      };
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'syncAll', data: sheetPayload })
+      }).then(res => res.json())
+        .then(res => {
+          console.log("Synchronisé avec Google Sheets :", res);
+          if(statusEl) statusEl.innerText = "● Connecté (Google Sheets)";
+        })
+        .catch(err => {
+          console.error("Erreur de synchro Google Sheets :", err);
+          if(statusEl) statusEl.innerText = "● Erreur de synchro réseau";
+        });
     }
+
+    // Chargement initial depuis Google Sheets
+    function loadFromGoogleSheets() {
+      const statusEl = document.getElementById('status');
+      if(statusEl) statusEl.innerText = "● Chargement Google Sheets...";
+
+      fetch(API_URL + '?action=getData')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.clients) {
+            S.d.clients = data.clients || [];
+            S.d.chantiers = data.chantiers || [];
+            S.d.devis = data.devis || [];
+            S.d.interventions = data.interventions || [];
+            S.d.factures = data.factures || [];
+            S.d.relances = data.relances || [];
+            if(statusEl) statusEl.innerText = "● Connecté (Google Sheets)";
+            // Rafraîchir l'affichage courant si besoin
+            if(typeof render === 'function') render();
+          } else {
+            fallbackLocal();
+          }
+        })
+        .catch(err => {
+          console.warn("Impossible de joindre Google Sheets, utilisation du cache local :", err);
+          fallbackLocal();
+        });
+    }
+
+    function fallbackLocal() {
+      let raw = localStorage.getItem('alainb_pro_data');
+      if(raw) {
+        try { S.d = JSON.parse(raw); } catch(e){}
+      }
+      const statusEl = document.getElementById('status');
+      if(statusEl) statusEl.innerText = "● Mode hors-ligne (Local)";
+      if(typeof render === 'function') render();
+    }
+
+    document.getElementById('syncbtn').onclick = () => {
+      loadFromGoogleSheets();
+    };
+
+    // Lancement au démarrage
+    window.addEventListener('DOMContentLoaded', () => {
+      loadFromGoogleSheets();
+    });
   </script>
 </body>
 </html>
