@@ -1177,7 +1177,7 @@
   <aside class="side" id="side">
     <div class="brand">
       <div class="mark">✦</div>
-      <div><b>AlainB Pro</b><small>GOOGLE SHEETS — V18</small></div>
+      <div><b>AlainB Pro</b><small>GOOGLE SHEETS — V4 Clound</small></div>
     </div>
     <nav class="nav">
       <button data-p="dash" class="active">⌂ &nbsp; Tableau de bord</button>
@@ -1294,40 +1294,119 @@
     }
 
     // Chargement initial depuis Google Sheets
-    function loadFromGoogleSheets() {
-      const statusEl = document.getElementById('status');
-      if(statusEl) statusEl.innerText = "● Chargement Google Sheets...";
+   function loadFromGoogleSheets() {
+  const statusEl = document.getElementById('status');
 
-      fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY))
-        .then(async res => {
-          const txt = await res.text();
-          try {
-            return JSON.parse(txt);
-          } catch (e) {
-            throw new Error(txt.slice(0, 300));
-          }
-        })
-        .then(data => {
-          const sheets = data && data.sheets ? data.sheets : data;
-          if (data && data.ok === false) throw new Error(data.error || 'Erreur Apps Script');
-          if (sheets) {
-            S.d.clients = sheets.Clients || sheets.clients || [];
-            S.d.chantiers = sheets.Chantiers || sheets.chantiers || [];
-            S.d.devis = sheets.Devis || sheets.devis || [];
-            S.d.interventions = sheets.Interventions || sheets.interventions || [];
-            S.d.factures = sheets.Factures || sheets.factures || [];
-            S.d.relances = sheets.Relances || sheets.relances || [];
-            if(statusEl) statusEl.innerText = "● Connecté (Google Sheets)";
-            if(typeof render === 'function') render();
-          } else {
-            fallbackLocal();
-          }
-        })
-        .catch(err => {
-          console.warn("Impossible de joindre Google Sheets, utilisation du cache local :", err);
-          fallbackLocal();
-        });
-    }
+  if (statusEl) {
+    statusEl.innerText = "● Chargement Google Sheets...";
+  }
+
+  fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
+    method: 'GET',
+    cache: 'no-store'
+  })
+    .then(async res => {
+      const txt = await res.text();
+
+      try {
+        return JSON.parse(txt);
+      } catch (e) {
+        throw new Error(
+          'Réponse non JSON reçue par Google Sheets : ' +
+          txt.slice(0, 300)
+        );
+      }
+    })
+    .then(data => {
+      if (!data) {
+        throw new Error('Réponse vide de Google Sheets');
+      }
+
+      if (data.ok === false) {
+        throw new Error(data.error || 'Erreur Apps Script');
+      }
+
+      const sheets = data.sheets || data;
+
+      S.d.clients =
+        sheets.Clients ||
+        sheets.clients ||
+        [];
+
+      S.d.chantiers =
+        sheets.Chantiers ||
+        sheets.chantiers ||
+        [];
+
+      S.d.devis =
+        sheets.Devis ||
+        sheets.devis ||
+        [];
+
+      S.d.interventions =
+        sheets.Interventions ||
+        sheets.interventions ||
+        [];
+
+      S.d.factures =
+        sheets.Factures ||
+        sheets.factures ||
+        [];
+
+      S.d.relances =
+        sheets.Relances ||
+        sheets.relances ||
+        [];
+
+      const settingsRows =
+        sheets.Parametres ||
+        sheets.parametres ||
+        sheets.Settings ||
+        sheets.settings ||
+        [];
+
+      if (Array.isArray(settingsRows)) {
+        S.d.settings = settingsRows[0] || {};
+      } else if (
+        settingsRows &&
+        typeof settingsRows === 'object'
+      ) {
+        S.d.settings = settingsRows;
+      } else {
+        S.d.settings = {};
+      }
+
+      S.file = 'Google Sheets Live';
+
+      localStorage.setItem(
+        'alainb_pro_data',
+        JSON.stringify(S.d)
+      );
+
+      if (statusEl) {
+        statusEl.innerText =
+          "● Connecté (Google Sheets)";
+      }
+
+      if (typeof render === 'function') {
+        render();
+      }
+    })
+    .catch(err => {
+      console.warn(
+        'Impossible de joindre Google Sheets, utilisation du cache local :',
+        err
+      );
+
+      if (statusEl) {
+        statusEl.innerText =
+          '● Erreur Google Sheets : ' +
+          (err.message || err);
+      }
+
+      fallbackLocal();
+    });
+}
 
     function fallbackLocal() {
       let raw = localStorage.getItem('alainb_pro_data');
