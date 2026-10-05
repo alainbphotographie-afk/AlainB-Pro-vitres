@@ -1301,9 +1301,29 @@
     statusEl.innerText = "● Chargement Google Sheets...";
   }
 
-  fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
-    method: 'GET',
-    cache: 'no-store'
+  const controller = new AbortController();
+
+const timeoutId = setTimeout(() => {
+  controller.abort();
+}, 15000);
+
+fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
+  method: 'GET',
+  cache: 'no-store',
+  signal: controller.signal
+})
+  .then(async res => {
+    clearTimeout(timeoutId);
+
+    const txt = await res.text();
+
+    try {
+      return JSON.parse(txt);
+    } catch (e) {
+      throw new Error(
+        'Réponse non JSON reçue : ' + txt.slice(0, 300)
+      );
+    }
   })
     .then(async res => {
       const txt = await res.text();
@@ -1435,15 +1455,28 @@ console.log('Fonction render :', typeof render);
 }
     })
     .catch(err => {
-  console.error(
-    'Erreur de chargement Google Sheets :',
-    err
-  );
+  clearTimeout(timeoutId);
 
-  if (statusEl) {
-    statusEl.innerText =
-      '● Erreur Google Sheets : ' +
-      (err.message || err);
+  if (err.name === 'AbortError') {
+    console.error(
+      'Google Sheets n’a pas répondu dans les 15 secondes.'
+    );
+
+    if (statusEl) {
+      statusEl.innerText =
+        '● Google Sheets trop lent ou inaccessible';
+    }
+  } else {
+    console.error(
+      'Erreur Google Sheets :',
+      err
+    );
+
+    if (statusEl) {
+      statusEl.innerText =
+        '● Erreur Google Sheets : ' +
+        (err.message || err);
+    }
   }
 
   fallbackLocal();
