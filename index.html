@@ -1294,7 +1294,7 @@
     }
 
     // Chargement initial depuis Google Sheets
-   function loadFromGoogleSheets() {
+  function loadFromGoogleSheets() {
   const statusEl = document.getElementById('status');
 
   if (statusEl) {
@@ -1303,29 +1303,18 @@
 
   const controller = new AbortController();
 
-const timeoutId = setTimeout(() => {
-  controller.abort();
-}, 15000);
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, 15000);
 
-fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
-  method: 'GET',
-  cache: 'no-store',
-  signal: controller.signal
-})
-  .then(async res => {
-    clearTimeout(timeoutId);
-
-    const txt = await res.text();
-
-    try {
-      return JSON.parse(txt);
-    } catch (e) {
-      throw new Error(
-        'Réponse non JSON reçue : ' + txt.slice(0, 300)
-      );
-    }
+  fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
+    method: 'GET',
+    cache: 'no-store',
+    signal: controller.signal
   })
     .then(async res => {
+      clearTimeout(timeoutId);
+
       const txt = await res.text();
 
       try {
@@ -1348,35 +1337,12 @@ fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
 
       const sheets = data.sheets || data;
 
-      S.d.clients =
-        sheets.Clients ||
-        sheets.clients ||
-        [];
-
-      S.d.chantiers =
-        sheets.Chantiers ||
-        sheets.chantiers ||
-        [];
-
-      S.d.devis =
-        sheets.Devis ||
-        sheets.devis ||
-        [];
-
-      S.d.interventions =
-        sheets.Interventions ||
-        sheets.interventions ||
-        [];
-
-      S.d.factures =
-        sheets.Factures ||
-        sheets.factures ||
-        [];
-
-      S.d.relances =
-        sheets.Relances ||
-        sheets.relances ||
-        [];
+      S.d.clients = sheets.Clients || sheets.clients || [];
+      S.d.chantiers = sheets.Chantiers || sheets.chantiers || [];
+      S.d.devis = sheets.Devis || sheets.devis || [];
+      S.d.interventions = sheets.Interventions || sheets.interventions || [];
+      S.d.factures = sheets.Factures || sheets.factures || [];
+      S.d.relances = sheets.Relances || sheets.relances || [];
 
       const settingsRows =
         sheets.Parametres ||
@@ -1387,10 +1353,7 @@ fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
 
       if (Array.isArray(settingsRows)) {
         S.d.settings = settingsRows[0] || {};
-      } else if (
-        settingsRows &&
-        typeof settingsRows === 'object'
-      ) {
+      } else if (settingsRows && typeof settingsRows === 'object') {
         S.d.settings = settingsRows;
       } else {
         S.d.settings = {};
@@ -1398,90 +1361,81 @@ fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
 
       S.file = 'Google Sheets Live';
 
-      localStorage.setItem(
-        'alainb_pro_data',
-        JSON.stringify(S.d)
-      );
+      localStorage.setItem('alainb_pro_data', JSON.stringify(S.d));
 
       if (statusEl) {
-        statusEl.innerText =
-          "● Connecté (Google Sheets)";
+        statusEl.innerText = "● Connecté (Google Sheets)";
       }
 
+      console.log('Réponse complète Google Sheets :', data);
+      console.log('Objet sheets :', sheets);
+      console.log('Données chargées :', S.d);
+      console.log('Fonction render :', typeof render);
+
       try {
-  if (typeof render !== 'function') {
-    throw new Error('La fonction render() est introuvable');
-  }
-// Test imédiat de contrôle
-console.log('Réponse complète Google Sheets :', data);
-console.log('Objet sheets :', sheets);
-console.log('Données chargées :', S.d);
-console.log('Fonction render :', typeof render);
-        
-  render();
-} catch (renderError) {
-  console.error(
-    'Erreur pendant le rendu de l’application :',
-    renderError
-  );
+        if (typeof render !== 'function') {
+          throw new Error('La fonction render() est introuvable');
+        }
 
-  if (statusEl) {
-    statusEl.innerText =
-      '● Erreur affichage : ' +
-      (renderError.message || renderError);
-  }
+        render();
+      } catch (renderError) {
+        console.error(
+          'Erreur pendant le rendu de l’application :',
+          renderError
+        );
 
-  const root = document.getElementById('root');
+        if (statusEl) {
+          statusEl.innerText =
+            '● Erreur affichage : ' +
+            (renderError.message || renderError);
+        }
 
-  if (root) {
-    root.innerHTML = `
-      <div style="
-        padding:24px;
-        margin:20px;
-        background:#fff3f3;
-        border:1px solid #d9534f;
-        border-radius:8px;
-        color:#8b1e1e;
-        font-family:Arial,sans-serif;
-      ">
-        <h2>Erreur d'affichage</h2>
-        <p>${String(renderError.message || renderError)}</p>
-        <p>Ouvrez la console du navigateur pour obtenir le détail.</p>
-      </div>
-    `;
-  }
+        const root = document.getElementById('root');
 
-  return;
-}
+        if (root) {
+          root.innerHTML = `
+            <div style="
+              padding:24px;
+              margin:20px;
+              background:#fff3f3;
+              border:1px solid #d9534f;
+              border-radius:8px;
+              color:#8b1e1e;
+              font-family:Arial,sans-serif;
+            ">
+              <h2>Erreur d'affichage</h2>
+              <p>${String(renderError.message || renderError)}</p>
+              <p>Ouvrez la console du navigateur pour obtenir le détail.</p>
+            </div>
+          `;
+        }
+      }
     })
     .catch(err => {
-  clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-  if (err.name === 'AbortError') {
-    console.error(
-      'Google Sheets n’a pas répondu dans les 15 secondes.'
-    );
+      if (err.name === 'AbortError') {
+        console.error(
+          'Google Sheets n’a pas répondu dans les 15 secondes.'
+        );
 
-    if (statusEl) {
-      statusEl.innerText =
-        '● Google Sheets trop lent ou inaccessible';
-    }
-  } else {
-    console.error(
-      'Erreur Google Sheets :',
-      err
-    );
+        if (statusEl) {
+          statusEl.innerText =
+            '● Google Sheets trop lent ou inaccessible';
+        }
+      } else {
+        console.error('Erreur Google Sheets :', err);
 
-    if (statusEl) {
-      statusEl.innerText =
-        '● Erreur Google Sheets : ' +
-        (err.message || err);
-    }
-  }
+        if (statusEl) {
+          statusEl.innerText =
+            '● Erreur Google Sheets : ' +
+            (err.message || err);
+        }
+      }
 
-  fallbackLocal();
-});
-
+      fallbackLocal();
+    });
+}
     function fallbackLocal() {
       let raw = localStorage.getItem('alainb_pro_data');
       if(raw) {
