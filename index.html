@@ -1388,25 +1388,66 @@
           "● Connecté (Google Sheets)";
       }
 
-      if (typeof render === 'function') {
-        render();
-      }
+      try {
+  if (typeof render !== 'function') {
+    throw new Error('La fonction render() est introuvable');
+  }
+// Test imédiat de contrôle
+console.log('Réponse complète Google Sheets :', data);
+console.log('Objet sheets :', sheets);
+console.log('Données chargées :', S.d);
+console.log('Fonction render :', typeof render);
+        
+  render();
+} catch (renderError) {
+  console.error(
+    'Erreur pendant le rendu de l’application :',
+    renderError
+  );
+
+  if (statusEl) {
+    statusEl.innerText =
+      '● Erreur affichage : ' +
+      (renderError.message || renderError);
+  }
+
+  const root = document.getElementById('root');
+
+  if (root) {
+    root.innerHTML = `
+      <div style="
+        padding:24px;
+        margin:20px;
+        background:#fff3f3;
+        border:1px solid #d9534f;
+        border-radius:8px;
+        color:#8b1e1e;
+        font-family:Arial,sans-serif;
+      ">
+        <h2>Erreur d'affichage</h2>
+        <p>${String(renderError.message || renderError)}</p>
+        <p>Ouvrez la console du navigateur pour obtenir le détail.</p>
+      </div>
+    `;
+  }
+
+  return;
+}
     })
     .catch(err => {
-      console.warn(
-        'Impossible de joindre Google Sheets, utilisation du cache local :',
-        err
-      );
+  console.error(
+    'Erreur de chargement Google Sheets :',
+    err
+  );
 
-      if (statusEl) {
-        statusEl.innerText =
-          '● Erreur Google Sheets : ' +
-          (err.message || err);
-      }
+  if (statusEl) {
+    statusEl.innerText =
+      '● Erreur Google Sheets : ' +
+      (err.message || err);
+  }
 
-      fallbackLocal();
-    });
-}
+  fallbackLocal();
+});
 
     function fallbackLocal() {
       let raw = localStorage.getItem('alainb_pro_data');
