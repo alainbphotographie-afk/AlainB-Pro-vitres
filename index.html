@@ -1177,7 +1177,7 @@
   <aside class="side" id="side">
     <div class="brand">
       <div class="mark">✦</div>
-      <div><b>AlainB Pro</b><small>GOOGLE SHEETS — V5 Clound</small></div>
+      <div><b>AlainB Pro</b><small>GOOGLE SHEETS — V4 Clound</small></div>
     </div>
     <nav class="nav">
       <button data-p="dash" class="active">⌂ &nbsp; Tableau de bord</button>
@@ -1210,7 +1210,7 @@
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script>
-    // URL de votre script Google Apps Script (V18)
+    // URL de votre script Google Apps Script (V5 nouveau déploiement clound)
     const API_URL = "https://script.google.com/macros/s/AKfycbxlsmr0WpcAbbi59rzxu_ckS6m3GuZe51631OBNeMIsUz0Oxxmvv9d0I5oQJy07v2Kh9A/exec";
     const SECRET_KEY = "5569";
 
@@ -1301,29 +1301,9 @@
     statusEl.innerText = "● Chargement Google Sheets...";
   }
 
-  const controller = new AbortController();
-
-const timeoutId = setTimeout(() => {
-  controller.abort();
-}, 15000);
-
-fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
-  method: 'GET',
-  cache: 'no-store',
-  signal: controller.signal
-})
-  .then(async res => {
-    clearTimeout(timeoutId);
-
-    const txt = await res.text();
-
-    try {
-      return JSON.parse(txt);
-    } catch (e) {
-      throw new Error(
-        'Réponse non JSON reçue : ' + txt.slice(0, 300)
-      );
-    }
+  fetch(API_URL + '?key=' + encodeURIComponent(SECRET_KEY), {
+    method: 'GET',
+    cache: 'no-store'
   })
     .then(async res => {
       const txt = await res.text();
@@ -1455,28 +1435,15 @@ console.log('Fonction render :', typeof render);
 }
     })
     .catch(err => {
-  clearTimeout(timeoutId);
+  console.error(
+    'Erreur de chargement Google Sheets :',
+    err
+  );
 
-  if (err.name === 'AbortError') {
-    console.error(
-      'Google Sheets n’a pas répondu dans les 15 secondes.'
-    );
-
-    if (statusEl) {
-      statusEl.innerText =
-        '● Google Sheets trop lent ou inaccessible';
-    }
-  } else {
-    console.error(
-      'Erreur Google Sheets :',
-      err
-    );
-
-    if (statusEl) {
-      statusEl.innerText =
-        '● Erreur Google Sheets : ' +
-        (err.message || err);
-    }
+  if (statusEl) {
+    statusEl.innerText =
+      '● Erreur Google Sheets : ' +
+      (err.message || err);
   }
 
   fallbackLocal();
